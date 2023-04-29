@@ -30,9 +30,9 @@ import alluxio.grpc.ErrorType;
 import alluxio.grpc.ExistsPOptions;
 import alluxio.grpc.FreePOptions;
 import alluxio.grpc.GetStatusPOptions;
+import alluxio.grpc.JobProgressReportFormat;
 import alluxio.grpc.ListStatusPOptions;
 import alluxio.grpc.ListStatusPartialPOptions;
-import alluxio.grpc.LoadProgressReportFormat;
 import alluxio.grpc.MountPOptions;
 import alluxio.grpc.OpenFilePOptions;
 import alluxio.grpc.RenamePOptions;
@@ -41,15 +41,19 @@ import alluxio.grpc.SetAclAction;
 import alluxio.grpc.SetAclPOptions;
 import alluxio.grpc.SetAttributePOptions;
 import alluxio.grpc.UnmountPOptions;
+import alluxio.job.JobDescription;
+import alluxio.job.JobRequest;
 import alluxio.resource.CloseableResource;
 import alluxio.security.authorization.AclEntry;
 import alluxio.security.authorization.Mode;
+import alluxio.underfs.Fingerprint;
 import alluxio.underfs.UfsFileStatus;
 import alluxio.underfs.UfsManager;
 import alluxio.underfs.UfsStatus;
 import alluxio.underfs.UnderFileSystem;
 import alluxio.underfs.options.CreateOptions;
 import alluxio.underfs.options.DeleteOptions;
+import alluxio.underfs.options.GetFileStatusOptions;
 import alluxio.underfs.options.ListOptions;
 import alluxio.underfs.options.MkdirsOptions;
 import alluxio.underfs.options.OpenOptions;
@@ -73,7 +77,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.OptionalLong;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javax.annotation.concurrent.ThreadSafe;
@@ -217,8 +220,10 @@ public class UfsBaseFileSystem implements FileSystem {
   public URIStatus getStatus(AlluxioURI path, final GetStatusPOptions options) {
     return callWithReturn(() -> {
       String ufsPath = path.getPath();
-      return transformStatus(mUfs.get().isFile(ufsPath)
-          ? mUfs.get().getFileStatus(ufsPath) : mUfs.get().getDirectoryStatus(ufsPath));
+      return transformStatus(mUfs.get().isFile(ufsPath) ? mUfs.get().getFileStatus(ufsPath,
+          GetFileStatusOptions.defaults()
+                              .setIncludeRealContentHash(options.getIncludeRealContentHash())) :
+          mUfs.get().getDirectoryStatus(ufsPath));
     });
   }
 
@@ -396,19 +401,18 @@ public class UfsBaseFileSystem implements FileSystem {
   }
 
   @Override
-  public boolean submitLoad(AlluxioURI path, OptionalLong bandwidth,
-      boolean usePartialListing, boolean verify) {
+  public Optional<String> submitJob(JobRequest jobRequest) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public boolean stopLoad(AlluxioURI path) {
+  public boolean stopJob(JobDescription jobDescription) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public String getLoadProgress(AlluxioURI path,
-      Optional<LoadProgressReportFormat> format, boolean verbose) {
+  public String getJobProgress(JobDescription jobDescription,
+      JobProgressReportFormat format, boolean verbose) {
     throw new UnsupportedOperationException();
   }
 
@@ -439,7 +443,11 @@ public class UfsBaseFileSystem implements FileSystem {
       UfsFileStatus fileStatus = (UfsFileStatus) ufsStatus;
       info.setLength(fileStatus.getContentLength());
       info.setBlockSizeBytes(fileStatus.getBlockSize());
-    } else {
+      info.setUfsFingerprint(
+          Fingerprint.create(mUfs.get().getUnderFSType(), ufsStatus, fileStatus.getContentHash())
+                     .serialize());
+    }
+    else {
       info.setLength(0);
     }
     return new URIStatus(info);

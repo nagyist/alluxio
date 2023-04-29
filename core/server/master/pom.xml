@@ -110,11 +110,21 @@
       <artifactId>alluxio-job-client</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.alluxio</groupId>
+      <artifactId>alluxio-stress-shell</artifactId>
+      <version>${project.version}</version>
+    </dependency>
 
     <!-- External test dependencies -->
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava-testlib</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.findify</groupId>
+      <artifactId>s3mock_2.13</artifactId>
       <scope>test</scope>
     </dependency>
 
@@ -136,6 +146,12 @@
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>httpclient</artifactId>
     </dependency>
+      <dependency>
+          <groupId>org.alluxio</groupId>
+          <artifactId>alluxio-underfs-s3a</artifactId>
+          <version>${project.version}</version>
+          <scope>test</scope>
+      </dependency>
   </dependencies>
 
   <build>

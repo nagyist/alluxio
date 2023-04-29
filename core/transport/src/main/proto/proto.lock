@@ -365,17 +365,22 @@
             ]
           },
           {
-            "name": "RemoveDecommissionedWorkerPOptions",
+            "name": "RemoveDisabledWorkerPOptions",
             "fields": [
               {
                 "id": 1,
-                "name": "workerName",
+                "name": "workerHostname",
                 "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "workerWebPort",
+                "type": "int64"
               }
             ]
           },
           {
-            "name": "RemoveDecommissionedWorkerPResponse"
+            "name": "RemoveDisabledWorkerPResponse"
           },
           {
             "name": "GetWorkerLostStoragePOptions"
@@ -388,6 +393,29 @@
                 "name": "workerLostStorageInfo",
                 "type": "WorkerLostStorageInfo",
                 "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "DecommissionWorkerPResponse"
+          },
+          {
+            "name": "DecommissionWorkerPOptions",
+            "fields": [
+              {
+                "id": 1,
+                "name": "workerHostname",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "workerWebPort",
+                "type": "int64"
+              },
+              {
+                "id": 3,
+                "name": "canRegisterAgain",
+                "type": "bool"
               }
             ]
           },
@@ -693,21 +721,6 @@
             ]
           },
           {
-            "name": "BuildVersion",
-            "fields": [
-              {
-                "id": 1,
-                "name": "version",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "revision",
-                "type": "string"
-              }
-            ]
-          },
-          {
             "name": "RegisterWorkerPOptions",
             "fields": [
               {
@@ -818,9 +831,9 @@
                 "out_type": "GetWorkerInfoListPResponse"
               },
               {
-                "name": "RemoveDecommissionedWorker",
-                "in_type": "RemoveDecommissionedWorkerPOptions",
-                "out_type": "RemoveDecommissionedWorkerPResponse"
+                "name": "RemoveDisabledWorker",
+                "in_type": "RemoveDisabledWorkerPOptions",
+                "out_type": "RemoveDisabledWorkerPResponse"
               },
               {
                 "name": "GetWorkerReport",
@@ -831,6 +844,11 @@
                 "name": "GetWorkerLostStorage",
                 "in_type": "GetWorkerLostStoragePOptions",
                 "out_type": "GetWorkerLostStoragePResponse"
+              },
+              {
+                "name": "DecommissionWorker",
+                "in_type": "DecommissionWorkerPOptions",
+                "out_type": "DecommissionWorkerPResponse"
               }
             ]
           },
@@ -1555,6 +1573,10 @@
                 "integer": 2
               },
               {
+                "name": "HISTOGRAM",
+                "integer": 5
+              },
+              {
                 "name": "TIMER",
                 "integer": 3
               },
@@ -1589,6 +1611,14 @@
               {
                 "name": "Persist",
                 "integer": 5
+              },
+              {
+                "name": "Decommissioned",
+                "integer": 6
+              },
+              {
+                "name": "Disabled",
+                "integer": 7
               }
             ]
           },
@@ -1883,6 +1913,21 @@
                 "type": "ErrorType"
               }
             ]
+          },
+          {
+            "name": "BuildVersion",
+            "fields": [
+              {
+                "id": 1,
+                "name": "version",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "revision",
+                "type": "string"
+              }
+            ]
           }
         ],
         "package": {
@@ -2085,7 +2130,7 @@
             ]
           },
           {
-            "name": "LoadProgressReportFormat",
+            "name": "JobProgressReportFormat",
             "enum_fields": [
               {
                 "name": "TEXT",
@@ -2304,6 +2349,11 @@
                     "value": "true"
                   }
                 ]
+              },
+              {
+                "id": 15,
+                "name": "ufsReadWorkerLocation",
+                "type": "grpc.WorkerNetAddress"
               }
             ]
           },
@@ -2348,6 +2398,11 @@
                     "value": "NEW_PATHS"
                   }
                 ]
+              },
+              {
+                "id": 8,
+                "name": "checkS3BucketPath",
+                "type": "bool"
               }
             ],
             "maps": [
@@ -2449,6 +2504,21 @@
                     "value": "NEW_PATHS"
                   }
                 ]
+              },
+              {
+                "id": 13,
+                "name": "overwrite",
+                "type": "bool"
+              },
+              {
+                "id": 14,
+                "name": "checkS3BucketPath",
+                "type": "bool"
+              },
+              {
+                "id": 15,
+                "name": "workerLocation",
+                "type": "grpc.WorkerNetAddress"
               }
             ],
             "maps": [
@@ -2641,6 +2711,11 @@
                     "value": "true"
                   }
                 ]
+              },
+              {
+                "id": 5,
+                "name": "includeRealContentHash",
+                "type": "bool"
               }
             ]
           },
@@ -2745,6 +2820,11 @@
               {
                 "id": 6,
                 "name": "disableAreDescendantsLoadedCheck",
+                "type": "bool"
+              },
+              {
+                "id": 7,
+                "name": "excludeMountInfo",
                 "type": "bool"
               }
             ]
@@ -3774,7 +3854,27 @@
             "name": "NeedsSyncResponse"
           },
           {
-            "name": "LoadPathPOptions",
+            "name": "SubmitJobPRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "request_body",
+                "type": "bytes"
+              }
+            ]
+          },
+          {
+            "name": "SubmitJobPResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "jobId",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "LoadJobPOptions",
             "fields": [
               {
                 "id": 1,
@@ -3794,57 +3894,72 @@
             ]
           },
           {
-            "name": "LoadPathPRequest",
+            "name": "CopyJobPOptions",
             "fields": [
               {
                 "id": 1,
-                "name": "path",
+                "name": "bandwidth",
+                "type": "int64"
+              },
+              {
+                "id": 2,
+                "name": "verify",
+                "type": "bool"
+              },
+              {
+                "id": 3,
+                "name": "partialListing",
+                "type": "bool"
+              },
+              {
+                "id": 4,
+                "name": "overwrite",
+                "type": "bool"
+              }
+            ]
+          },
+          {
+            "name": "StopJobPRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "jobDescription",
+                "type": "JobDescription"
+              }
+            ]
+          },
+          {
+            "name": "StopJobPResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "jobStopped",
+                "type": "bool"
+              }
+            ]
+          },
+          {
+            "name": "JobDescription",
+            "fields": [
+              {
+                "id": 1,
+                "name": "type",
                 "type": "string"
               },
               {
                 "id": 2,
-                "name": "options",
-                "type": "LoadPathPOptions"
-              }
-            ]
-          },
-          {
-            "name": "LoadPathPResponse",
-            "fields": [
-              {
-                "id": 1,
-                "name": "newLoadSubmitted",
-                "type": "bool"
-              }
-            ]
-          },
-          {
-            "name": "StopLoadPathPRequest",
-            "fields": [
-              {
-                "id": 1,
                 "name": "path",
                 "type": "string"
               }
             ]
           },
           {
-            "name": "StopLoadPathPResponse",
-            "fields": [
-              {
-                "id": 1,
-                "name": "existingLoadStopped",
-                "type": "bool"
-              }
-            ]
-          },
-          {
-            "name": "LoadProgressPOptions",
+            "name": "JobProgressPOptions",
             "fields": [
               {
                 "id": 1,
                 "name": "format",
-                "type": "LoadProgressReportFormat"
+                "type": "JobProgressReportFormat"
               },
               {
                 "id": 2,
@@ -3854,22 +3969,22 @@
             ]
           },
           {
-            "name": "GetLoadProgressPRequest",
+            "name": "GetJobProgressPRequest",
             "fields": [
               {
                 "id": 1,
-                "name": "path",
-                "type": "string"
+                "name": "jobDescription",
+                "type": "JobDescription"
               },
               {
                 "id": 2,
                 "name": "options",
-                "type": "LoadProgressPOptions"
+                "type": "JobProgressPOptions"
               }
             ]
           },
           {
-            "name": "GetLoadProgressPResponse",
+            "name": "GetJobProgressPResponse",
             "fields": [
               {
                 "id": 1,
@@ -3879,7 +3994,7 @@
               {
                 "id": 2,
                 "name": "format",
-                "type": "LoadProgressReportFormat"
+                "type": "JobProgressReportFormat"
               }
             ]
           },
@@ -4152,19 +4267,19 @@
                 "out_type": "NeedsSyncResponse"
               },
               {
-                "name": "LoadPath",
-                "in_type": "LoadPathPRequest",
-                "out_type": "LoadPathPResponse"
+                "name": "submitJob",
+                "in_type": "SubmitJobPRequest",
+                "out_type": "SubmitJobPResponse"
               },
               {
-                "name": "StopLoadPath",
-                "in_type": "StopLoadPathPRequest",
-                "out_type": "StopLoadPathPResponse"
+                "name": "StopJob",
+                "in_type": "StopJobPRequest",
+                "out_type": "StopJobPResponse"
               },
               {
-                "name": "GetLoadProgress",
-                "in_type": "GetLoadProgressPRequest",
-                "out_type": "GetLoadProgressPResponse"
+                "name": "GetJobProgress",
+                "in_type": "GetJobProgressPRequest",
+                "out_type": "GetJobProgressPResponse"
               }
             ]
           },
@@ -4362,6 +4477,22 @@
               {
                 "name": "PERSIST",
                 "integer": 3
+              }
+            ]
+          },
+          {
+            "name": "JobMasterMetaCommand",
+            "enum_fields": [
+              {
+                "name": "MetaCommand_Unknown"
+              },
+              {
+                "name": "MetaCommand_Nothing",
+                "integer": 1
+              },
+              {
+                "name": "MetaCommand_Register",
+                "integer": 2
               }
             ]
           }
@@ -4636,6 +4767,11 @@
                 "id": 7,
                 "name": "unfinishedTasks",
                 "type": "int32"
+              },
+              {
+                "id": 8,
+                "name": "version",
+                "type": "grpc.BuildVersion"
               }
             ]
           },
@@ -4918,6 +5054,55 @@
             ]
           },
           {
+            "name": "JobMasterStatus",
+            "fields": [
+              {
+                "id": 1,
+                "name": "state",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "masterAddress",
+                "type": "grpc.NetAddress"
+              },
+              {
+                "id": 3,
+                "name": "startTime",
+                "type": "int64"
+              },
+              {
+                "id": 4,
+                "name": "version",
+                "type": "grpc.BuildVersion"
+              }
+            ]
+          },
+          {
+            "name": "GetAllMasterStatusPOptions"
+          },
+          {
+            "name": "GetAllMasterStatusPRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "options",
+                "type": "GetAllMasterStatusPOptions"
+              }
+            ]
+          },
+          {
+            "name": "GetAllMasterStatusPResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "jobMasterStatus",
+                "type": "JobMasterStatus",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
             "name": "SubmitOptions"
           },
           {
@@ -5097,6 +5282,11 @@
                 "id": 2,
                 "name": "options",
                 "type": "RegisterJobWorkerPOptions"
+              },
+              {
+                "id": 3,
+                "name": "version",
+                "type": "grpc.BuildVersion"
               }
             ]
           },
@@ -5107,6 +5297,100 @@
                 "id": 1,
                 "name": "id",
                 "type": "int64"
+              }
+            ]
+          },
+          {
+            "name": "GetJobMasterIdPOptions"
+          },
+          {
+            "name": "GetJobMasterIdPRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "masterAddress",
+                "type": "grpc.NetAddress"
+              },
+              {
+                "id": 2,
+                "name": "options",
+                "type": "GetJobMasterIdPOptions"
+              }
+            ]
+          },
+          {
+            "name": "GetJobMasterIdPResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "masterId",
+                "type": "int64"
+              }
+            ]
+          },
+          {
+            "name": "RegisterJobMasterPOptions",
+            "fields": [
+              {
+                "id": 2,
+                "name": "startTimeMs",
+                "type": "int64"
+              },
+              {
+                "id": 3,
+                "name": "losePrimacyTimeMs",
+                "type": "int64"
+              },
+              {
+                "id": 4,
+                "name": "version",
+                "type": "grpc.BuildVersion"
+              }
+            ]
+          },
+          {
+            "name": "RegisterJobMasterPRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "jobMasterId",
+                "type": "int64"
+              },
+              {
+                "id": 2,
+                "name": "options",
+                "type": "RegisterJobMasterPOptions"
+              }
+            ]
+          },
+          {
+            "name": "RegisterJobMasterPResponse"
+          },
+          {
+            "name": "JobMasterHeartbeatPOptions"
+          },
+          {
+            "name": "JobMasterHeartbeatPRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "masterId",
+                "type": "int64"
+              },
+              {
+                "id": 2,
+                "name": "options",
+                "type": "JobMasterHeartbeatPOptions"
+              }
+            ]
+          },
+          {
+            "name": "JobMasterHeartbeatPResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "command",
+                "type": "JobMasterMetaCommand"
               }
             ]
           }
@@ -5151,6 +5435,11 @@
                 "out_type": "GetAllWorkerHealthPResponse"
               },
               {
+                "name": "GetAllMasterStatus",
+                "in_type": "GetAllMasterStatusPRequest",
+                "out_type": "GetAllMasterStatusPResponse"
+              },
+              {
                 "name": "Submit",
                 "in_type": "SubmitRequest",
                 "out_type": "SubmitResponse"
@@ -5179,6 +5468,26 @@
                 "name": "RegisterJobWorker",
                 "in_type": "RegisterJobWorkerPRequest",
                 "out_type": "RegisterJobWorkerPResponse"
+              }
+            ]
+          },
+          {
+            "name": "JobMasterMasterService",
+            "rpcs": [
+              {
+                "name": "GetMasterId",
+                "in_type": "GetJobMasterIdPRequest",
+                "out_type": "GetJobMasterIdPResponse"
+              },
+              {
+                "name": "RegisterMaster",
+                "in_type": "RegisterJobMasterPRequest",
+                "out_type": "RegisterJobMasterPResponse"
+              },
+              {
+                "name": "MasterHeartbeat",
+                "in_type": "JobMasterHeartbeatPRequest",
+                "out_type": "JobMasterHeartbeatPResponse"
               }
             ]
           }
@@ -5663,6 +5972,10 @@
               {
                 "name": "RAFT_ADDRESSES",
                 "integer": 12
+              },
+              {
+                "name": "MASTER_VERSION",
+                "integer": 13
               }
             ]
           },
@@ -5929,6 +6242,32 @@
                 "name": "raftAddress",
                 "type": "string",
                 "is_repeated": true
+              },
+              {
+                "id": 14,
+                "name": "masterVersions",
+                "type": "MasterVersion",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "MasterVersion",
+            "fields": [
+              {
+                "id": 1,
+                "name": "addresses",
+                "type": "grpc.NetAddress"
+              },
+              {
+                "id": 2,
+                "name": "version",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "state",
+                "type": "string"
               }
             ]
           },
@@ -6052,6 +6391,60 @@
             ]
           },
           {
+            "name": "ProxyStatus",
+            "fields": [
+              {
+                "id": 1,
+                "name": "address",
+                "type": "grpc.NetAddress"
+              },
+              {
+                "id": 2,
+                "name": "state",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "startTime",
+                "type": "int64"
+              },
+              {
+                "id": 4,
+                "name": "lastHeartbeatTime",
+                "type": "int64"
+              },
+              {
+                "id": 5,
+                "name": "version",
+                "type": "grpc.BuildVersion"
+              }
+            ]
+          },
+          {
+            "name": "ListProxyStatusPRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "options",
+                "type": "ListProxyStatusPOptions"
+              }
+            ]
+          },
+          {
+            "name": "ListProxyStatusPOptions"
+          },
+          {
+            "name": "ListProxyStatusPResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "proxyStatuses",
+                "type": "ProxyStatus",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
             "name": "SetPathConfigurationPOptions"
           },
           {
@@ -6163,6 +6556,26 @@
                 "name": "configs",
                 "type": "grpc.ConfigProperty",
                 "is_repeated": true
+              },
+              {
+                "id": 2,
+                "name": "startTimeMs",
+                "type": "int64"
+              },
+              {
+                "id": 3,
+                "name": "losePrimacyTimeMs",
+                "type": "int64"
+              },
+              {
+                "id": 4,
+                "name": "version",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "revision",
+                "type": "string"
               }
             ]
           },
@@ -6185,7 +6598,19 @@
             "name": "RegisterMasterPResponse"
           },
           {
-            "name": "MasterHeartbeatPOptions"
+            "name": "MasterHeartbeatPOptions",
+            "fields": [
+              {
+                "id": 1,
+                "name": "lastCheckpointTime",
+                "type": "int64"
+              },
+              {
+                "id": 2,
+                "name": "journalEntriesSinceCheckpoint",
+                "type": "int64"
+              }
+            ]
           },
           {
             "name": "MasterHeartbeatPRequest",
@@ -6237,6 +6662,39 @@
                 }
               }
             ]
+          },
+          {
+            "name": "ProxyHeartbeatPOptions",
+            "fields": [
+              {
+                "id": 1,
+                "name": "proxyAddress",
+                "type": "grpc.NetAddress"
+              },
+              {
+                "id": 2,
+                "name": "startTime",
+                "type": "int64"
+              },
+              {
+                "id": 3,
+                "name": "version",
+                "type": "grpc.BuildVersion"
+              }
+            ]
+          },
+          {
+            "name": "ProxyHeartbeatPRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "options",
+                "type": "ProxyHeartbeatPOptions"
+              }
+            ]
+          },
+          {
+            "name": "ProxyHeartbeatPResponse"
           }
         ],
         "services": [
@@ -6267,6 +6725,11 @@
                 "name": "Checkpoint",
                 "in_type": "CheckpointPOptions",
                 "out_type": "CheckpointPResponse"
+              },
+              {
+                "name": "ListProxyStatus",
+                "in_type": "ListProxyStatusPRequest",
+                "out_type": "ListProxyStatusPResponse"
               }
             ]
           },
@@ -6317,6 +6780,16 @@
                 "name": "MasterHeartbeat",
                 "in_type": "MasterHeartbeatPRequest",
                 "out_type": "MasterHeartbeatPResponse"
+              }
+            ]
+          },
+          {
+            "name": "MetaMasterProxyService",
+            "rpcs": [
+              {
+                "name": "ProxyHeartbeat",
+                "in_type": "ProxyHeartbeatPRequest",
+                "out_type": "ProxyHeartbeatPResponse"
               }
             ]
           }
@@ -6557,6 +7030,11 @@
                 "id": 2,
                 "name": "snapshotIndex",
                 "type": "int64"
+              },
+              {
+                "id": 3,
+                "name": "exists",
+                "type": "bool"
               }
             ]
           },
@@ -6629,6 +7107,9 @@
                 "type": "SnapshotData"
               }
             ]
+          },
+          {
+            "name": "LatestSnapshotInfoPRequest"
           }
         ],
         "services": [
@@ -6647,6 +7128,17 @@
                 "in_type": "DownloadSnapshotPRequest",
                 "out_type": "DownloadSnapshotPResponse",
                 "in_streamed": true,
+                "out_streamed": true
+              },
+              {
+                "name": "RequestLatestSnapshotInfo",
+                "in_type": "LatestSnapshotInfoPRequest",
+                "out_type": "SnapshotMetadata"
+              },
+              {
+                "name": "RequestLatestSnapshotData",
+                "in_type": "SnapshotMetadata",
+                "out_type": "SnapshotData",
                 "out_streamed": true
               }
             ]
@@ -8207,6 +8699,10 @@
                 "integer": 8
               },
               {
+                "name": "META_MASTER_PROXY_SERVICE",
+                "integer": 18
+              },
+              {
                 "name": "METRICS_MASTER_CLIENT_SERVICE",
                 "integer": 9
               },
@@ -8217,6 +8713,10 @@
               {
                 "name": "JOB_MASTER_WORKER_SERVICE",
                 "integer": 11
+              },
+              {
+                "name": "JOB_MASTER_MASTER_SERVICE",
+                "integer": 19
               },
               {
                 "name": "JOURNAL_MASTER_CLIENT_SERVICE",
@@ -9692,6 +10192,61 @@
                 "type": "int64"
               }
             ]
+          },
+          {
+            "name": "CopyJobEntry",
+            "fields": [
+              {
+                "id": 1,
+                "name": "src",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "dst",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "state",
+                "type": "PJobState"
+              },
+              {
+                "id": 4,
+                "name": "bandwidth",
+                "type": "int64"
+              },
+              {
+                "id": 5,
+                "name": "verify",
+                "type": "bool"
+              },
+              {
+                "id": 6,
+                "name": "user",
+                "type": "string"
+              },
+              {
+                "id": 7,
+                "name": "partialListing",
+                "type": "bool"
+              },
+              {
+                "id": 8,
+                "name": "job_id",
+                "type": "string"
+              },
+              {
+                "id": 9,
+                "name": "end_time",
+                "type": "int64"
+              },
+              {
+                "id": 10,
+                "name": "overwrite",
+                "type": "int64"
+              }
+            ]
           }
         ],
         "package": {
@@ -9915,6 +10470,11 @@
                 "id": 53,
                 "name": "load_job",
                 "type": "LoadJobEntry"
+              },
+              {
+                "id": 54,
+                "name": "copy_job",
+                "type": "CopyJobEntry"
               },
               {
                 "id": 39,
